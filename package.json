@@ -1,0 +1,11 @@
+{
+  "name": "typecalc",
+  "version": "1.0.0",
+  "description": "",
+  "main": "typecalc.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Ringating",
+  "license": "ISC"
+}
