@@ -14,6 +14,35 @@ var types_str = typefile_str.slice(0, typefile_str.indexOf('\n'));
 var typechart_str = typefile_str.slice(typefile_str.indexOf('\n') + 1);
 var types_arr = types_str.split(',');
 
+const colors = 
+{
+    Reset : "\x1b[0m",
+    Bright : "\x1b[1m",
+    Dim : "\x1b[2m",
+    Underscore : "\x1b[4m",
+    Blink : "\x1b[5m",
+    Reverse : "\x1b[7m",
+    Hidden : "\x1b[8m",
+
+    FgBlack : "\x1b[30m",
+    FgRed : "\x1b[31m",
+    FgGreen : "\x1b[32m",
+    FgYellow : "\x1b[33m",
+    FgBlue : "\x1b[34m",
+    FgMagenta : "\x1b[35m",
+    FgCyan : "\x1b[36m",
+    FgWhite : "\x1b[37m",
+
+    BgBlack : "\x1b[40m",
+    BgRed : "\x1b[41m",
+    BgGreen : "\x1b[42m",
+    BgYellow : "\x1b[43m",
+    BgBlue : "\x1b[44m",
+    BgMagenta : "\x1b[45m",
+    BgCyan : "\x1b[46m",
+    BgWhite : "\x1b[47m"
+}
+
 typechart_arr = new Array(types_arr.length);
 for(let i = 0; i < types_arr.length; ++i)
 {
@@ -130,7 +159,7 @@ function printEffTypes(eff)
 
 function printEffDefensive(eff)
 {
-    console.log("---------- DEFENSE ----------\n");
+    console.log(colors.FgCyan, "---------- DEFENSE ----------\n");
     
     var typeStr = "";
     
@@ -201,7 +230,7 @@ function printEffDefensive(eff)
 
 function printEffOffensive(eff)
 {
-    console.log("---------- OFFENSE ----------\n");
+    console.log(colors.FgRed, "---------- OFFENSE ----------\n");
     var strongStrings = new Array();
     var weakStrings = new Array();
     var immuneStrings = new Array();
