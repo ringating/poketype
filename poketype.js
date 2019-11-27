@@ -115,7 +115,6 @@ async function pokeMode()
 {
     while(true)
     {
-        console.log(colors.Reset);
         var inputStr = await askQuestion("\nenter a pokémon's name\nname: ");
         
         console.log("");
@@ -136,13 +135,14 @@ async function pokeMode()
                 {
                     return;
                 }
-                console.log("\n\nPokémon: " + pokedex[pokeIndex].name.english + "\n");
+                console.log(colors.Bright, colors.FgYellow);
+                console.log("\nPokémon: " + pokedex[pokeIndex].name.english + "\n");
                 printEffTypes(effectiveness);
-                console.log("");
+                console.log(colors.FgCyan);
                 printEffDefensive(effectiveness);
-                console.log("");
+                console.log(colors.FgRed);
                 printEffOffensive(effectiveness);
-                console.log("");
+                console.log(colors.Reset);
                 break;
         }
     }
@@ -162,7 +162,7 @@ function printEffTypes(eff)
 
 function printEffDefensive(eff)
 {
-    console.log(colors.FgCyan, "---------- DEFENSE ----------\n");
+    console.log("---------- DEFENSE ----------\n");
     
     var typeStr = "";
     
@@ -233,7 +233,7 @@ function printEffDefensive(eff)
 
 function printEffOffensive(eff)
 {
-    console.log(colors.FgRed, "---------- OFFENSE ----------\n");
+    console.log("---------- OFFENSE ----------\n");
     var strongStrings = new Array();
     var weakStrings = new Array();
     var immuneStrings = new Array();
