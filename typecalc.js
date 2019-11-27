@@ -8,7 +8,7 @@ const rl = readline.createInterface
 
 
 var typefile_str = fs.readFileSync("typedata", "utf8");
-var pokedex = JSON.parse( fs.readFileSync("pokedex.json") );
+var pokedex = JSON.parse( fs.readFileSync("pokedex.json") ); // yoinked from https://github.com/fanzeyi/pokemon.json
 
 var types_str = typefile_str.slice(0, typefile_str.indexOf('\n'));
 var typechart_str = typefile_str.slice(typefile_str.indexOf('\n') + 1);
@@ -21,32 +21,225 @@ for(let i = 0; i < types_arr.length; ++i)
     typechart_arr[i] = getRowArr(i, typechart_str);
 }
 
-console.log("\nselect a mode, \"pokemon\" or \"types\"");
-rl.question("mode: ", (modeStr)=>
+var pokemonNames = new Array();
+for(let i = 0; i < pokedex.length; ++i)
 {
-    //TODO, see this for nested questions: https://nodejs.org/en/knowledge/command-line/how-to-prompt-for-command-line-input/
+    pokemonNames.push(pokedex[i].name.english);
+}
+
+iNeedSynchronousInput();
+async function iNeedSynchronousInput()
+{
+    while(true)
+    {
+        var modeStr = await askQuestion("\nselect a mode, \"pokemon\" or \"types\"\nmode: ");
+        switch(getStrIndex(modeStr, ["pokemon","types"]))
+        {
+            case 0: // pokemon
+                pokeMode();
+                break;
+            
+            case 1: // types
+                typeMode();
+                break;
+            
+            default: // invalid mode
+                console.log("\"" + modeStr + "\" is an invalid mode");
+                break;
+        }
+    }
+}
+
+
+function askQuestion(question)
+{
+    return new Promise(resolve => rl.question(question, result => resolve(result)));
+}
+
+
+async function typeMode()
+{
+    while(true)
+    {
+        var inputStr = await askQuestion("\ntype(s): ");
+
+        var reqTypes = inputStr.split(' ');
+
+        var effectiveness = getEffectiveness(reqTypes);
+        if(effectiveness.err < 0)
+        {
+            return;
+        }
+        printEffTypes(effectiveness);
+        console.log("");
+        printEffDefensive(effectiveness);
+        console.log("");
+        printEffOffensive(effectiveness);
+        console.log("");
+    }
+}
+
+
+async function pokeMode()
+{
+    while(true)
+    {
+        var inputStr = await askQuestion("\nenter a pokémon's name\nname: ");
+        
+        console.log("");
+        
+        pokeIndex = getStrIndex(inputStr, pokemonNames);
+        
+        switch(pokeIndex)
+        {
+            case -1:
+                console.log("input \"" + inputStr + "\" does not match an existing pokémon name");
+                break;
+            case -2:
+                console.log("input \"" + inputStr + "\" matches multiple pokémon names");
+                break;
+            default:
+                var effectiveness = getEffectiveness(pokedex[pokeIndex].type);
+                if(effectiveness.err < 0)
+                {
+                    return;
+                }
+                console.log("\n\nPokémon: " + pokedex[pokeIndex].name.english + "\n");
+                printEffTypes(effectiveness);
+                console.log("");
+                printEffDefensive(effectiveness);
+                console.log("");
+                printEffOffensive(effectiveness);
+                console.log("");
+                break;
+        }
+    }
+}
+
+
+function printEffTypes(eff)
+{
+    var typeStr = "Type:";
+    for(let i = 0; i < eff.types.length; ++i)
+    {
+        typeStr += " " + eff.types[i] + ",";
+    }
+    console.log(typeStr.slice(0, typeStr.length-1));
+}
+
+
+function printEffDefensive(eff)
+{
+    console.log("---------- DEFENSE ----------\n");
     
-    rl.close();
-});
-
-rl.question("\ntype(s): ", (inputStr)=>
-{    
-    var reqTypes = inputStr.split(' ');
+    var typeStr = "";
     
-    var effectiveness = getEffectiveness(reqTypes);
+    var strongStr = "";
+    var reallyStrongStr = "";
+    var weakStr = "";
+    var reallyWeakStr = "";
     
-    if(effectiveness.err < 0){ rl.close(); return; }
+    var immuneStrings = new Array();
     
-    console.log(effectiveness.offEffArr);
-    console.log(effectiveness.defEffArr);
+    for(let i = 0; i < eff.typeIndeces.length; ++i)
+    {
+        typeStr += types_arr[eff.typeIndeces[i]].toUpperCase() + "/";
+    }
+    typeStr = typeStr.slice(0, typeStr.length-1);
+    strongStr       = typeStr;
+    reallyStrongStr = typeStr;
+    weakStr         = typeStr;
+    reallyWeakStr   = typeStr;
     
-    rl.close();
-});
+    strongStr       += " -    2x weak to: ";
+    reallyStrongStr += " -    4x weak to: ";
+    weakStr         += " -  0.5x weak to: ";
+    reallyWeakStr   += " - 0.25x weak to: ";
+    
+    for(let i = 0; i < eff.defEffArr.length; ++i)
+    {
+        switch(eff.defEffArr[i])
+        {
+            case 2:
+                strongStr += " " + types_arr[i] + ",";
+                break;
+            case 4:
+                reallyStrongStr += " " + types_arr[i] + ",";
+                break;
+            case 0.5:
+                weakStr += " " + types_arr[i] + ",";
+                break;
+            case 0.25:
+                reallyWeakStr += " " + types_arr[i] + ",";
+                break;
+            case 0:
+                immuneStrings.push(typeStr + " is immune to " + types_arr[i].toUpperCase());
+                break;
+        }
+    }
+    strongStr = strongStr.slice(0, strongStr.length-1);
+    reallyStrongStr = reallyStrongStr.slice(0, reallyStrongStr.length-1);
+    weakStr = weakStr.slice(0, weakStr.length-1);
+    reallyWeakStr = reallyWeakStr.slice(0, reallyWeakStr.length-1);
+    
+    console.log(strongStr);
+    console.log(reallyStrongStr);
+    console.log("");
+    console.log(weakStr);
+    console.log(reallyWeakStr);
+    
+    if(immuneStrings.length > 0)
+    {
+        console.log("");
+        for(let j = 0; j < immuneStrings.length; ++j)
+            console.log(immuneStrings[j]);
+    }
+    
+    console.log("")
+}
 
 
-
-
-
+function printEffOffensive(eff)
+{
+    console.log("---------- OFFENSE ----------\n");
+    var strongStrings = new Array();
+    var weakStrings = new Array();
+    var immuneStrings = new Array();
+    for(let i = 0; i < eff.typeIndeces.length; ++i)
+    {
+        strongStrings[i] = types_arr[eff.typeIndeces[i]].toUpperCase() + " -   2x strong against: ";
+        weakStrings[i]   = types_arr[eff.typeIndeces[i]].toUpperCase() + " - 0.5x strong against: ";
+        for(let j = 0; j < typechart_arr.length; ++j)
+        {
+            switch(parseFloat(typechart_arr[eff.typeIndeces[i]][j]))
+            {
+                case 2:
+                    strongStrings[i] += " " + types_arr[j] + ",";
+                    break;
+                
+                case 0.5:
+                    weakStrings[i]   += " " + types_arr[j] + ",";
+                    break;
+                
+                case 0:
+                    immuneStrings.push(types_arr[j].toUpperCase() + " is immune to " + types_arr[eff.typeIndeces[i]].toUpperCase());
+                    break;
+                
+                default:
+                    break;
+            }
+        }
+        console.log(strongStrings[i].slice(0, strongStrings[i].length-1));
+        console.log(  weakStrings[i].slice(0,   weakStrings[i].length-1));
+        console.log("");
+    }
+    if(immuneStrings.length > 0)
+    {
+        for(let j = 0; j < immuneStrings.length; ++j)
+            console.log(immuneStrings[j]);
+        console.log("");
+    }
+}
 
 
 function getRowArr(rowIndex, str)
@@ -98,6 +291,8 @@ function getEffectiveness(reqTypes) // reqTypes is an array of type strings
     {
         offEffArr: new Array(types_arr.length).fill(1),
         defEffArr: new Array(types_arr.length).fill(1),
+        typeIndeces: new Array(),
+        types: new Array(),
         err: 0
     };
     
@@ -117,6 +312,10 @@ function getEffectiveness(reqTypes) // reqTypes is an array of type strings
             eff.err = -2;
             break;
         }
+        
+        eff.types.push(types_arr[typeIndex]);
+        eff.typeIndeces.push(typeIndex);
+        
         for(let j = 0; j < types_arr.length; ++j)
         {
             eff.offEffArr[j] *= typechart_arr[ typeIndex ][ j ];
