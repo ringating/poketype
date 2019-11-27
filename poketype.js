@@ -61,6 +61,7 @@ async function iNeedSynchronousInput()
 {
     while(true)
     {
+        console.log(colors.Reset);
         var modeStr = await askQuestion("\nselect a mode, \"pokemon\" or \"types\"\nmode: ");
         switch(getStrIndex(modeStr, ["pokemon","types"]))
         {
@@ -90,6 +91,7 @@ async function typeMode()
 {
     while(true)
     {
+        console.log(colors.Reset);
         var inputStr = await askQuestion("\ntype(s): ");
 
         var reqTypes = inputStr.split(' ');
@@ -113,6 +115,7 @@ async function pokeMode()
 {
     while(true)
     {
+        console.log(colors.Reset);
         var inputStr = await askQuestion("\nenter a pokémon's name\nname: ");
         
         console.log("");
