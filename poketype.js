@@ -6,6 +6,12 @@ const rl = readline.createInterface
     output: process.stdout
 });
 
+// https://stackoverflow.com/questions/10021373/what-is-the-windows-equivalent-of-process-onsigint-in-node-js/14861513#14861513
+rl.on("SIGINT", function()
+{
+    process.emit("SIGINT");
+});
+
 
 var typefile_str = fs.readFileSync("typedata", "utf8");
 var pokedex = JSON.parse( fs.readFileSync("pokedex.json") ); // yoinked from https://github.com/fanzeyi/pokemon.json
@@ -43,6 +49,13 @@ const colors =
     BgWhite : "\x1b[47m"
 }
 
+// on ctrl-c, do this
+process.on("SIGINT", function()
+{
+    console.log(colors.Reset, colors.FgWhite, "\n");
+    process.exit();
+});
+
 typechart_arr = new Array(types_arr.length);
 for(let i = 0; i < types_arr.length; ++i)
 {
@@ -61,7 +74,7 @@ async function iNeedSynchronousInput()
 {
     while(true)
     {
-        console.log(colors.Reset);
+        console.log(colors.Reset, colors.FgBlack, colors.Bright);
         var modeStr = await askQuestion("\nselect a mode, \"pokemon\" or \"types\"\nmode: ");
         switch(getStrIndex(modeStr, ["pokemon","types"]))
         {
@@ -91,8 +104,9 @@ async function typeMode()
 {
     while(true)
     {
-        console.log(colors.Reset);
         var inputStr = await askQuestion("\ntype(s): ");
+        
+        console.log("");
 
         var reqTypes = inputStr.split(' ');
 
@@ -101,12 +115,9 @@ async function typeMode()
         {
             return;
         }
-        printEffTypes(effectiveness);
-        console.log("");
-        printEffDefensive(effectiveness);
-        console.log("");
-        printEffOffensive(effectiveness);
-        console.log("");
+        console.log(colors.Bright, colors.FgYellow);
+        printAllTypeInfo(effectiveness);
+        console.log(colors.Reset, colors.FgBlack, colors.Bright);
     }
 }
 
@@ -116,8 +127,6 @@ async function pokeMode()
     while(true)
     {
         var inputStr = await askQuestion("\nenter a pokémon's name\nname: ");
-        
-        console.log("");
         
         pokeIndex = getStrIndex(inputStr, pokemonNames);
         
@@ -137,17 +146,21 @@ async function pokeMode()
                 }
                 console.log(colors.Bright, colors.FgYellow);
                 console.log("\nPokémon: " + pokedex[pokeIndex].name.english + "\n");
-                printEffTypes(effectiveness);
-                console.log(colors.FgCyan);
-                printEffDefensive(effectiveness);
-                console.log(colors.FgRed);
-                printEffOffensive(effectiveness);
-                console.log(colors.Reset);
+                printAllTypeInfo(effectiveness);
+                console.log(colors.Reset, colors.FgBlack, colors.Bright);
                 break;
         }
     }
 }
 
+function printAllTypeInfo(eff)
+{
+    printEffTypes(eff);
+    console.log(colors.FgCyan);
+    printEffDefensive(eff);
+    console.log(colors.FgRed);
+    printEffOffensive(eff);
+}
 
 function printEffTypes(eff)
 {
@@ -226,8 +239,6 @@ function printEffDefensive(eff)
         for(let j = 0; j < immuneStrings.length; ++j)
             console.log(immuneStrings[j]);
     }
-    
-    console.log("")
 }
 
 
@@ -239,6 +250,7 @@ function printEffOffensive(eff)
     var immuneStrings = new Array();
     for(let i = 0; i < eff.typeIndeces.length; ++i)
     {
+        if (i > 0) console.log("");
         strongStrings[i] = types_arr[eff.typeIndeces[i]].toUpperCase() + " -   2x strong against: ";
         weakStrings[i]   = types_arr[eff.typeIndeces[i]].toUpperCase() + " - 0.5x strong against: ";
         for(let j = 0; j < typechart_arr.length; ++j)
@@ -263,13 +275,12 @@ function printEffOffensive(eff)
         }
         console.log(strongStrings[i].slice(0, strongStrings[i].length-1));
         console.log(  weakStrings[i].slice(0,   weakStrings[i].length-1));
-        console.log("");
     }
     if(immuneStrings.length > 0)
     {
+        console.log("");
         for(let j = 0; j < immuneStrings.length; ++j)
             console.log(immuneStrings[j]);
-        console.log("");
     }
 }
 
